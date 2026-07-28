@@ -4,6 +4,9 @@ import { CORE_STATUSES } from '../types'
 /** Where tasks land when their column is deleted, and the default for new tasks. */
 export const FALLBACK_STATUS: Status = 'todo'
 
+/** The column new tasks are created in, and the only one with an add control. */
+export const CREATE_STATUS: Status = 'todo'
+
 /** Shown in place of a title the user has not filled in yet. */
 export const UNTITLED_LABEL = 'Untitled task'
 
@@ -98,9 +101,10 @@ export function createTask(
   status: Status,
   description?: string,
   due_at?: string,
+  id: string = newId(),
 ): Task {
   return {
-    id: newId(),
+    id,
     title: normalizeTitle(title),
     ...(optionalText(description) ? { description: optionalText(description) } : {}),
     status,
@@ -132,8 +136,20 @@ export function visibleTasks(tasks: Task[], status: Status, query = ''): Task[] 
 }
 
 export type BoardAction =
-  | { type: 'add_task'; title: string; description?: string; status: Status; due_at?: string }
+  /** `id` may be supplied so the caller can focus the card it just created. */
+  | {
+      type: 'add_task'
+      id?: string
+      title: string
+      description?: string
+      status: Status
+      due_at?: string
+    }
   | { type: 'edit_task'; id: string; title: string; description?: string; due_at?: string }
+  /** Title-only update, so inline renaming cannot clear the other fields. */
+  | { type: 'rename_task'; id: string; title: string }
+  /** Due-date-only update, set from the card without opening the details dialog. */
+  | { type: 'set_due_date'; id: string; due_at?: string }
   | { type: 'move_task'; id: string; status: Status }
   | { type: 'delete_task'; id: string }
   | { type: 'add_column'; label: string }
@@ -150,10 +166,18 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
         ...state,
         tasks: [
           ...state.tasks,
-          createTask(action.title, status, action.description, action.due_at),
+          createTask(action.title, status, action.description, action.due_at, action.id),
         ],
       }
     }
+
+    case 'rename_task':
+      return {
+        ...state,
+        tasks: state.tasks.map((task) =>
+          task.id === action.id ? { ...task, title: normalizeTitle(action.title) } : task,
+        ),
+      }
 
     case 'edit_task':
       return {
@@ -167,6 +191,14 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
                 due_at: action.due_at || undefined,
               }
             : task,
+        ),
+      }
+
+    case 'set_due_date':
+      return {
+        ...state,
+        tasks: state.tasks.map((task) =>
+          task.id === action.id ? { ...task, due_at: action.due_at || undefined } : task,
         ),
       }
 

@@ -1,63 +1,55 @@
 import { createTheme, ThemeProvider } from '@mui/material/styles'
-import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import CssBaseline from '@mui/material/CssBaseline'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { BoardColumn } from './components/BoardColumn'
-import { useBoard } from './hooks/useBoard'
-import { visibleTasks } from './lib/board'
-import { SAMPLE_TASKS } from './lib/samples'
+import { BoardToolbar } from './components/BoardToolbar'
+import { TaskDialog } from './components/TaskDialog'
+import { BoardProvider } from './context/BoardProvider'
+import { useBoardContext } from './context/boardContext'
 
 const theme = createTheme({
   palette: { mode: 'light' },
   shape: { borderRadius: 8 },
 })
 
-function App() {
-  const { board } = useBoard()
-
-  // Placeholder until the create dialog lands in the next slice.
-  const tasks = board.tasks.length > 0 ? board.tasks : SAMPLE_TASKS
+function Board() {
+  const { board } = useBoardContext()
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default' }}>
-        <AppBar
-          position="static"
-          color="inherit"
-          elevation={0}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Toolbar>
-            <Typography variant="h6" component="h1" sx={{ fontWeight: 600 }}>
-              Task Board
-            </Typography>
-          </Toolbar>
-        </AppBar>
-
-        <Container maxWidth="lg" sx={{ py: 3 }}>
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              alignItems: 'start',
-              // min() lets a track shrink below 280px on very narrow screens.
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
-            }}
-          >
-            {board.columns.map((column) => (
-              <BoardColumn
-                key={column.id}
-                column={column}
-                tasks={visibleTasks(tasks, column.status)}
-              />
-            ))}
-          </Box>
-        </Container>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          alignItems: 'start',
+          // min() lets a track shrink below 280px on very narrow screens.
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
+        }}
+      >
+        {board.columns.map((column) => (
+          <BoardColumn key={column.id} column={column} />
+        ))}
       </Box>
+    </Container>
+  )
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <CssBaseline />
+        <BoardProvider>
+          <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default' }}>
+            <BoardToolbar />
+            <Board />
+          </Box>
+          <TaskDialog />
+        </BoardProvider>
+      </LocalizationProvider>
     </ThemeProvider>
   )
 }

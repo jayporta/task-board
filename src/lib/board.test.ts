@@ -178,6 +178,35 @@ describe('edit_task', () => {
   })
 })
 
+describe('rename_task', () => {
+  it('changes only the title, leaving description and due date intact', () => {
+    const original = task({ description: 'details', due_at: '2026-08-01T00:00:00.000Z' })
+    const next = boardReducer(boardWith([original]), {
+      type: 'rename_task',
+      id: original.id,
+      title: '  Renamed  ',
+    })
+
+    expect(next.tasks[0]).toEqual({ ...original, title: 'Renamed' })
+  })
+})
+
+describe('set_due_date', () => {
+  it('sets and clears the due date, leaving the other fields intact', () => {
+    const original = task({ description: 'details' })
+    const withDue = boardReducer(boardWith([original]), {
+      type: 'set_due_date',
+      id: original.id,
+      due_at: '2026-08-01T00:00:00.000Z',
+    })
+    expect(withDue.tasks[0]).toEqual({ ...original, due_at: '2026-08-01T00:00:00.000Z' })
+
+    const cleared = boardReducer(withDue, { type: 'set_due_date', id: original.id })
+    expect(cleared.tasks[0].due_at).toBeUndefined()
+    expect(cleared.tasks[0].description).toBe('details')
+  })
+})
+
 describe('move_task', () => {
   it('moves a task to another core column', () => {
     const next = boardReducer(boardWith([task()]), {
