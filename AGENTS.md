@@ -24,5 +24,4 @@ TypeScript is split into two project references: `tsconfig.app.json` (browser co
 
 ## Rules
 
-- Write unit test for custom functions.
 - Run unit tests after changing code to prevent regression and introducing new bugs.
