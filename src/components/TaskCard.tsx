@@ -51,7 +51,7 @@ export function TaskCard({ task }: { task: Task }) {
 
   return (
     <Card variant="outlined" {...dragProps} sx={{ opacity: dragging ? 0.4 : 1 }}>
-      {/* A tab across the top centre: the only place a drag can start. */}
+      {/* A tab across the top center: the only place a drag can start. */}
       <Stack direction="row" sx={{ justifyContent: 'center' }}>
         <Tooltip title="Drag to another status">
           <IconButton

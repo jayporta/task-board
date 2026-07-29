@@ -16,12 +16,7 @@ function Board() {
   const { board } = useBoardContext()
 
   return (
-    // The scroller fills the space under the header, so its horizontal bar sits
-    // at the bottom of the window rather than under the tallest column.
-    // px matches the Toolbar gutters, lining the columns up with the heading.
     <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', px: { xs: 2, sm: 3 }, py: 3 }}>
-      {/* One horizontal row rather than a wrapping grid, so the add button
-          always sits directly beside the last column. */}
       <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
         {board.columns.map((column) => (
           <BoardColumn key={column.id} column={column} />

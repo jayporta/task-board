@@ -18,8 +18,6 @@ export function SearchResults({ anchorEl }: { anchorEl: HTMLElement | null }) {
   const columnLabel = (status: Status) =>
     board.columns.find((column) => column.status === status)?.label ?? status
 
-  // The list stays up for as long as there is a query. Clearing is explicit —
-  // the field's clear button or Escape — so a stray click never loses a search.
   return (
     <Popper
       open={open}

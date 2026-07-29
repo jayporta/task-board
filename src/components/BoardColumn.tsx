@@ -40,8 +40,6 @@ export function BoardColumn({ column }: { column: Column }) {
       variant="outlined"
       {...dropProps}
       sx={{
-        // Grows to share the row but never past 400px, and never shrinks below
-        // 280px — the row scrolls horizontally instead.
         flex: '1 0 280px',
         maxWidth: 400,
         display: 'flex',
@@ -66,7 +64,7 @@ export function BoardColumn({ column }: { column: Column }) {
 
         {addButton}
 
-        {/* Only user-added columns can go; the three core statuses are fixed. */}
+        {/* Only user-added columns can be deleted; the three core statuses are fixed. */}
         {!isCoreColumn(column) && (
           <Tooltip title="Delete column">
             <IconButton
