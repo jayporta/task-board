@@ -1,11 +1,15 @@
 import type { BoardState, Column, CoreStatus, Status, Task } from '../types'
 import { CORE_STATUSES } from '../types'
 
-/** Where tasks land when their column is deleted, and the default for new tasks. */
-export const FALLBACK_STATUS: Status = 'todo'
+/**
+ * Where orphaned tasks land: when their column is deleted, or when a stored
+ * task's status matches no column. Typed as a core status so it can only ever
+ * name a column that cannot itself be deleted.
+ */
+export const FALLBACK_STATUS: CoreStatus = 'todo'
 
 /** The column new tasks are created in, and the only one with an add control. */
-export const CREATE_STATUS: Status = 'todo'
+export const CREATE_STATUS: CoreStatus = 'todo'
 
 /** Shown in place of a title the user has not filled in yet. */
 export const UNTITLED_LABEL = 'Untitled task'
@@ -103,10 +107,12 @@ export function createTask(
   due_at?: string,
   id: string = newId(),
 ): Task {
+  const text = optionalText(description)
+
   return {
     id,
     title: normalizeTitle(title),
-    ...(optionalText(description) ? { description: optionalText(description) } : {}),
+    ...(text ? { description: text } : {}),
     status,
     created_at: new Date().toISOString(),
     ...(due_at ? { due_at } : {}),
@@ -237,8 +243,5 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
         ),
       }
     }
-
-    default:
-      return state
   }
 }

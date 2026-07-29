@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box'
-import ClickAwayListener from '@mui/material/ClickAwayListener'
 import List from '@mui/material/List'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
@@ -19,49 +18,48 @@ export function SearchResults({ anchorEl }: { anchorEl: HTMLElement | null }) {
   const columnLabel = (status: Status) =>
     board.columns.find((column) => column.status === status)?.label ?? status
 
-  // Dismissing clears the query, so the field always matches what is listed.
+  // The list stays up for as long as there is a query. Clearing is explicit —
+  // the field's clear button or Escape — so a stray click never loses a search.
   return (
-    <ClickAwayListener onClickAway={() => open && setQuery('')}>
-      <Popper
-        open={open}
-        anchorEl={anchorEl}
-        placement="bottom-end"
-        sx={{ zIndex: (theme) => theme.zIndex.appBar + 1 }}
+    <Popper
+      open={open}
+      anchorEl={anchorEl}
+      placement="bottom-end"
+      sx={{ zIndex: (theme) => theme.zIndex.appBar + 1 }}
+    >
+      <Paper
+        elevation={6}
+        sx={{ mt: 1, width: anchorEl?.offsetWidth, maxHeight: 320, overflowY: 'auto' }}
       >
-        <Paper
-          elevation={6}
-          sx={{ mt: 1, width: anchorEl?.offsetWidth, maxHeight: 320, overflowY: 'auto' }}
-        >
-          {results.length === 0 ? (
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Typography variant="body2" color="text.secondary">
-                No tasks match “{query.trim()}”
-              </Typography>
-            </Box>
-          ) : (
-            <List dense disablePadding>
-              {results.map((task) => (
-                <ListItemButton
-                  key={task.id}
-                  onClick={() => {
-                    openDetails(task)
-                    setQuery('')
+        {results.length === 0 ? (
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              No tasks match “{query.trim()}”
+            </Typography>
+          </Box>
+        ) : (
+          <List dense disablePadding>
+            {results.map((task) => (
+              <ListItemButton
+                key={task.id}
+                onClick={() => {
+                  openDetails(task)
+                  setQuery('')
+                }}
+              >
+                <ListItemText
+                  primary={displayTitle(task)}
+                  secondary={columnLabel(task.status)}
+                  slotProps={{
+                    primary: { noWrap: true, sx: { fontWeight: 600 } },
+                    secondary: { variant: 'caption' },
                   }}
-                >
-                  <ListItemText
-                    primary={displayTitle(task)}
-                    secondary={columnLabel(task.status)}
-                    slotProps={{
-                      primary: { noWrap: true, sx: { fontWeight: 600 } },
-                      secondary: { variant: 'caption' },
-                    }}
-                  />
-                </ListItemButton>
-              ))}
-            </List>
-          )}
-        </Paper>
-      </Popper>
-    </ClickAwayListener>
+                />
+              </ListItemButton>
+            ))}
+          </List>
+        )}
+      </Paper>
+    </Popper>
   )
 }

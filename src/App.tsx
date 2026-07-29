@@ -1,6 +1,7 @@
 import { ThemeProvider } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import CssBaseline from '@mui/material/CssBaseline'
+import Stack from '@mui/material/Stack'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AddColumnButton } from './components/AddColumnButton'
@@ -9,7 +10,7 @@ import { BoardToolbar } from './components/BoardToolbar'
 import { TaskDialog } from './components/TaskDialog'
 import { BoardProvider } from './context/BoardProvider'
 import { useBoardContext } from './context/boardContext'
-import { useThemeMode } from './hooks/useThemeMode'
+import { MODE_STORAGE_KEY, theme } from './lib/theme'
 
 function Board() {
   const { board } = useBoardContext()
@@ -21,22 +22,20 @@ function Board() {
     <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', px: { xs: 2, sm: 3 }, py: 3 }}>
       {/* One horizontal row rather than a wrapping grid, so the add button
           always sits directly beside the last column. */}
-      <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 2, alignItems: 'flex-start' }}>
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
         {board.columns.map((column) => (
           <BoardColumn key={column.id} column={column} />
         ))}
 
         <AddColumnButton />
-      </Box>
+      </Stack>
     </Box>
   )
 }
 
 function App() {
-  const { mode, toggleMode, theme } = useThemeMode()
-
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme} defaultMode="system" modeStorageKey={MODE_STORAGE_KEY}>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <CssBaseline />
         <BoardProvider>
@@ -48,7 +47,7 @@ function App() {
               bgcolor: 'background.default',
             }}
           >
-            <BoardToolbar mode={mode} onToggleMode={toggleMode} />
+            <BoardToolbar />
             <Board />
           </Box>
           <TaskDialog />

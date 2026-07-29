@@ -10,18 +10,20 @@ import TextField from '@mui/material/TextField'
 import Toolbar from '@mui/material/Toolbar'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import { useColorScheme } from '@mui/material/styles'
 import { useBoardContext } from '../context/boardContext'
-import type { ThemeMode } from '../lib/theme'
 import { SearchResults } from './SearchResults'
 
-type BoardToolbarProps = {
-  mode: ThemeMode
-  onToggleMode: () => void
-}
-
-export function BoardToolbar({ mode, onToggleMode }: BoardToolbarProps) {
+export function BoardToolbar() {
   const { query, setQuery } = useBoardContext()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const { mode, systemMode, setMode } = useColorScheme()
+
+  // `mode` is 'system' until a choice is made, and undefined on the very first
+  // render, so the icon follows the scheme actually in effect.
+  const resolved = (mode === 'system' ? systemMode : mode) ?? 'light'
+  const dark = resolved === 'dark'
+  const toggleLabel = dark ? 'Switch to light mode' : 'Switch to dark mode'
 
   return (
     <AppBar
@@ -64,12 +66,9 @@ export function BoardToolbar({ mode, onToggleMode }: BoardToolbarProps) {
 
         <SearchResults anchorEl={anchorEl} />
 
-        <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-          <IconButton
-            aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            onClick={onToggleMode}
-          >
-            {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+        <Tooltip title={toggleLabel}>
+          <IconButton aria-label={toggleLabel} onClick={() => setMode(dark ? 'light' : 'dark')}>
+            {dark ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
         </Tooltip>
       </Toolbar>

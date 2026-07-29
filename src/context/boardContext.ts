@@ -8,6 +8,8 @@ export type BoardContextValue = {
   /** Adds an empty task to `status` and marks its card to take focus. */
   createTask: (status: Status) => void
   focusTaskId: string | null
+  /** Called once the focus has been taken, so it cannot fire again on remount. */
+  clearFocus: () => void
   /** The task whose details dialog is open, resolved fresh from board state. */
   detailsTask: Task | null
   openDetails: (task: Task) => void

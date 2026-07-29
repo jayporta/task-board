@@ -1,35 +1,32 @@
-import { createTheme, type Theme } from '@mui/material/styles'
+import { createTheme } from '@mui/material/styles'
 
-export type ThemeMode = 'light' | 'dark'
-
+/** Where the light/dark choice is remembered. */
 export const MODE_STORAGE_KEY = 'task-board:mode'
 
-export function buildTheme(mode: ThemeMode): Theme {
-  return createTheme({
-    palette: { mode },
-    shape: { borderRadius: 8 },
-  })
-}
-
-/** The saved preference, falling back to whatever the system asks for. */
-export function loadMode(): ThemeMode {
-  try {
-    const saved = localStorage.getItem(MODE_STORAGE_KEY)
-    if (saved === 'light' || saved === 'dark') return saved
-  } catch {
-    // ignore — fall through to the system preference
-  }
-
-  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light'
-}
-
-/** Best-effort, like the board itself: a blocked quota must not break the UI. */
-export function saveMode(mode: ThemeMode): void {
-  try {
-    localStorage.setItem(MODE_STORAGE_KEY, mode)
-  } catch {
-    // ignore
-  }
-}
+/**
+ * Declaring both colour schemes lets MUI own the light/dark plumbing — it
+ * persists the choice, follows the system when nothing is chosen, and exposes
+ * the toggle through `useColorScheme`.
+ */
+export const theme = createTheme({
+  colorSchemes: { light: true, dark: true },
+  shape: { borderRadius: 8 },
+  components: {
+    // MUI's required asterisk only reddens on error; make it red throughout so
+    // a required field reads as required before anything goes wrong.
+    MuiFormLabel: {
+      styleOverrides: {
+        asterisk: ({ theme }) => ({ color: theme.palette.error.main }),
+      },
+    },
+    // Every dialog in the app wants the same roomier action row.
+    MuiDialogActions: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          paddingInline: theme.spacing(3),
+          paddingBottom: theme.spacing(2),
+        }),
+      },
+    },
+  },
+})

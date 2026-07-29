@@ -4,7 +4,7 @@ import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import { AddColumnDialog } from './AddColumnDialog'
 
-/** Sits to the right of the last column, as the board's only column control. */
+/** Sits to the right of the last column. */
 export function AddColumnButton() {
   const [open, setOpen] = useState(false)
 

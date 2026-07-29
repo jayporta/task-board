@@ -1,38 +1,40 @@
-import { useState } from 'react'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
-import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
-import dayjs, { type Dayjs } from 'dayjs'
-import { useBoardContext } from '../context/boardContext'
-import { UNTITLED_LABEL } from '../lib/board'
-import type { Task } from '../types'
+import { useState } from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs, { type Dayjs } from 'dayjs';
+import { useBoardContext } from '../context/boardContext';
+import { UNTITLED_LABEL } from '../lib/board';
+import type { Task } from '../types';
 
 /**
  * The task details form. Mounted only while its dialog is open, so its fields
  * start from the task each time rather than needing to resync.
  */
 export function TaskForm({ task }: { task: Task }) {
-  const { dispatch, closeDetails } = useBoardContext()
-  const [title, setTitle] = useState(task.title)
-  const [description, setDescription] = useState(task.description ?? '')
-  const [dueAt, setDueAt] = useState<Dayjs | null>(task.due_at ? dayjs(task.due_at) : null)
+  const { dispatch, closeDetails } = useBoardContext();
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description ?? '');
+  const [dueAt, setDueAt] = useState<Dayjs | null>(
+    task.due_at ? dayjs(task.due_at) : null,
+  );
 
   const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
     dispatch({
       type: 'edit_task',
       id: task.id,
       title,
       description,
       due_at: dueAt?.toISOString(),
-    })
-    closeDetails()
-  }
+    });
+    closeDetails();
+  };
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -47,7 +49,6 @@ export function TaskForm({ task }: { task: Task }) {
             placeholder={UNTITLED_LABEL}
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            helperText="Optional — you can name it later."
           />
 
           <TextField
@@ -63,17 +64,20 @@ export function TaskForm({ task }: { task: Task }) {
             label="Due date"
             value={dueAt}
             onChange={setDueAt}
-            slotProps={{ field: { clearable: true }, textField: { fullWidth: true } }}
+            slotProps={{
+              field: { clearable: true },
+              textField: { fullWidth: true },
+            }}
           />
         </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <DialogActions>
         <Button onClick={closeDetails}>Cancel</Button>
         <Button type="submit" variant="contained">
           Save
         </Button>
       </DialogActions>
     </Box>
-  )
+  );
 }

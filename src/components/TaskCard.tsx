@@ -1,38 +1,41 @@
 import { useState } from 'react'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
-import EventBusyIcon from '@mui/icons-material/EventBusy'
-import EventIcon from '@mui/icons-material/Event'
 import ButtonBase from '@mui/material/ButtonBase'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import InputBase from '@mui/material/InputBase'
 import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker'
-import dayjs, { type Dayjs } from 'dayjs'
 import { useBoardContext } from '../context/boardContext'
 import { useTaskDrag } from '../hooks/useTaskDrag'
-import { displayTitle, UNTITLED_LABEL } from '../lib/board'
-import { describeDueDate, formatDate, isOverdue } from '../lib/dates'
+import { displayTitle, normalizeTitle, UNTITLED_LABEL } from '../lib/board'
+import { formatDate } from '../lib/dates'
 import type { Task } from '../types'
 import { ConfirmDialog } from './ConfirmDialog'
+import { TaskDueDate } from './TaskDueDate'
 
 export function TaskCard({ task }: { task: Task }) {
-  const { dispatch, focusTaskId, openDetails } = useBoardContext()
+  const { dispatch, focusTaskId, clearFocus, openDetails } = useBoardContext()
   const { dragging, dragProps, handleProps } = useTaskDrag(task.id)
   const [title, setTitle] = useState(task.title)
-  const [pickerOpen, setPickerOpen] = useState(false)
-  // The picker is controlled, so it needs its own draft while the user browses.
-  const [dueDraft, setDueDraft] = useState<Dayjs | null>(null)
+  const [committed, setCommitted] = useState(task.title)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const overdue = isOverdue(task.due_at)
 
-  const commit = () => {
-    if (title.trim() !== task.title) dispatch({ type: 'rename_task', id: task.id, title })
+  // The card stays mounted while the task changes, so an edit made in the
+  // details dialog has to be pulled into the draft — otherwise the next blur
+  // would write the stale title back over it.
+  if (committed !== task.title) {
+    setCommitted(task.title)
+    setTitle(task.title)
+  }
+
+  const commitTitle = () => {
+    const next = normalizeTitle(title)
+    setTitle(next)
+    if (next !== task.title) dispatch({ type: 'rename_task', id: task.id, title: next })
   }
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -46,11 +49,6 @@ export function TaskCard({ task }: { task: Task }) {
     }
   }
 
-  const openPicker = () => {
-    setDueDraft(task.due_at ? dayjs(task.due_at) : null)
-    setPickerOpen(true)
-  }
-
   return (
     <Card variant="outlined" {...dragProps} sx={{ opacity: dragging ? 0.4 : 1 }}>
       {/* A tab across the top centre: the only place a drag can start. */}
@@ -60,15 +58,15 @@ export function TaskCard({ task }: { task: Task }) {
             size="small"
             aria-label={`Drag ${displayTitle(task)}`}
             {...handleProps}
-            sx={{
+            sx={(theme) => ({
               cursor: 'grab',
               color: 'text.disabled',
-              borderRadius: '0 0 8px 8px',
+              borderRadius: `0 0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
               px: 2,
               py: 0,
               '&:hover': { bgcolor: 'action.hover', color: 'text.secondary' },
               '&:active': { cursor: 'grabbing' },
-            }}
+            })}
           >
             <DragIndicatorIcon fontSize="small" sx={{ transform: 'rotate(90deg)' }} />
           </IconButton>
@@ -76,6 +74,7 @@ export function TaskCard({ task }: { task: Task }) {
       </Stack>
 
       <CardContent sx={{ pt: 0.5, '&:last-child': { pb: 2 } }}>
+        {/* Its own row above the title, which needs the full card width. */}
         <Typography
           variant="caption"
           color="text.secondary"
@@ -90,9 +89,12 @@ export function TaskCard({ task }: { task: Task }) {
           autoFocus={task.id === focusTaskId}
           value={title}
           placeholder={UNTITLED_LABEL}
-          inputProps={{ 'aria-label': `Title of ${displayTitle(task)}` }}
+          slotProps={{ input: { 'aria-label': `Title of ${displayTitle(task)}` } }}
           onChange={(event) => setTitle(event.target.value)}
-          onBlur={commit}
+          // Consuming the focus here stops it firing again when the card
+          // remounts, which happens every time it moves to another column.
+          onFocus={() => task.id === focusTaskId && clearFocus()}
+          onBlur={commitTitle}
           onKeyDown={handleKeyDown}
           sx={{
             typography: 'subtitle2',
@@ -147,15 +149,7 @@ export function TaskCard({ task }: { task: Task }) {
           spacing={1}
           sx={{ alignItems: 'center', justifyContent: 'space-between', mt: 1.5 }}
         >
-          <Chip
-            size="small"
-            variant="outlined"
-            clickable
-            color={overdue ? 'error' : 'default'}
-            icon={overdue ? <EventBusyIcon /> : <EventIcon />}
-            label={`Due date: ${describeDueDate(task.due_at) || 'none'}`}
-            onClick={openPicker}
-          />
+          <TaskDueDate task={task} />
 
           <Tooltip title="Delete task">
             <IconButton
@@ -168,21 +162,6 @@ export function TaskCard({ task }: { task: Task }) {
             </IconButton>
           </Tooltip>
         </Stack>
-
-        {/* Field hidden: the chip above is the trigger, and the picker is a modal. */}
-        <MobileDatePicker
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          value={dueDraft}
-          onChange={setDueDraft}
-          onAccept={(value) =>
-            dispatch({ type: 'set_due_date', id: task.id, due_at: value?.toISOString() })
-          }
-          slotProps={{
-            textField: { sx: { display: 'none' } },
-            actionBar: { actions: ['clear', 'cancel', 'accept'] },
-          }}
-        />
 
         <ConfirmDialog
           open={confirmingDelete}

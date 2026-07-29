@@ -10,7 +10,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useBoardContext } from '../context/boardContext'
 import { useTaskDropTarget } from '../hooks/useTaskDropTarget'
-import { CREATE_STATUS, isCoreColumn, visibleTasks } from '../lib/board'
+import { CREATE_STATUS, FALLBACK_STATUS, isCoreColumn, visibleTasks } from '../lib/board'
 import { ConfirmDialog } from './ConfirmDialog'
 import { EmptyState } from './EmptyState'
 import { TaskCard } from './TaskCard'
@@ -21,6 +21,11 @@ export function BoardColumn({ column }: { column: Column }) {
   const { isOver, dropProps } = useTaskDropTarget(column.status)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const tasks = visibleTasks(board.tasks, column.status)
+
+  // Named rather than hardcoded, so the confirmation cannot promise the wrong
+  // destination if FALLBACK_STATUS ever changes.
+  const fallbackLabel =
+    board.columns.find((candidate) => candidate.status === FALLBACK_STATUS)?.label ?? 'Todo'
 
   // New tasks always start in one column, so only that one gets an add control.
   const canAdd = column.status === CREATE_STATUS
@@ -99,7 +104,7 @@ export function BoardColumn({ column }: { column: Column }) {
             ? `"${column.label}" will be removed from the board.`
             : `"${column.label}" will be removed, and its ${tasks.length} ${
                 tasks.length === 1 ? 'task moves' : 'tasks move'
-              } back to Todo.`
+              } back to ${fallbackLabel}.`
         }
         onConfirm={() => dispatch({ type: 'delete_column', id: column.id })}
         onClose={() => setConfirmingDelete(false)}

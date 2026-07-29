@@ -20,6 +20,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     [dispatch],
   )
 
+  const clearFocus = useCallback(() => setFocusTaskId(null), [])
   const openDetails = useCallback((task: Task) => setDetailsTaskId(task.id), [])
   const closeDetails = useCallback(() => setDetailsTaskId(null), [])
 
@@ -32,13 +33,24 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       dispatch,
       createTask,
       focusTaskId,
+      clearFocus,
       detailsTask,
       openDetails,
       closeDetails,
       query,
       setQuery,
     }),
-    [board, dispatch, createTask, focusTaskId, detailsTask, openDetails, closeDetails, query],
+    [
+      board,
+      dispatch,
+      createTask,
+      focusTaskId,
+      clearFocus,
+      detailsTask,
+      openDetails,
+      closeDetails,
+      query,
+    ],
   )
 
   return <BoardContext.Provider value={value}>{children}</BoardContext.Provider>
