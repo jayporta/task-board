@@ -122,17 +122,24 @@ export function createColumn(label: string): Column {
   }
 }
 
-/** Tasks in one column, narrowed by an optional search query, newest first. */
-export function visibleTasks(tasks: Task[], status: Status, query = ''): Task[] {
+const newestFirst = (a: Task, b: Task) => b.created_at.localeCompare(a.created_at)
+
+/** Tasks in one column, newest first. */
+export function visibleTasks(tasks: Task[], status: Status): Task[] {
+  return tasks.filter((task) => task.status === status).sort(newestFirst)
+}
+
+/**
+ * Tasks matching a search, across every column. Empty for a blank query, so an
+ * untouched search box shows no results rather than the whole board.
+ */
+export function searchTasks(tasks: Task[], query: string): Task[] {
   const needle = query.trim().toLowerCase()
+  if (!needle) return []
 
   return tasks
-    .filter((task) => task.status === status)
-    .filter((task) => {
-      if (!needle) return true
-      return `${task.title} ${task.description ?? ''}`.toLowerCase().includes(needle)
-    })
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .filter((task) => `${task.title} ${task.description ?? ''}`.toLowerCase().includes(needle))
+    .sort(newestFirst)
 }
 
 export type BoardAction =

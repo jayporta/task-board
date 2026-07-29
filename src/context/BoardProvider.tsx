@@ -8,6 +8,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   const { board, dispatch } = useBoard()
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null)
   const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
 
   const createTask = useCallback(
     (status: Status) => {
@@ -34,8 +35,10 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       detailsTask,
       openDetails,
       closeDetails,
+      query,
+      setQuery,
     }),
-    [board, dispatch, createTask, focusTaskId, detailsTask, openDetails, closeDetails],
+    [board, dispatch, createTask, focusTaskId, detailsTask, openDetails, closeDetails, query],
   )
 
   return <BoardContext.Provider value={value}>{children}</BoardContext.Provider>

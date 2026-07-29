@@ -12,6 +12,9 @@ export type BoardContextValue = {
   detailsTask: Task | null
   openDetails: (task: Task) => void
   closeDetails: () => void
+  /** Search text narrowing every column at once. */
+  query: string
+  setQuery: (query: string) => void
 }
 
 export const BoardContext = createContext<BoardContextValue | null>(null)

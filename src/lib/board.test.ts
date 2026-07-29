@@ -10,6 +10,7 @@ import {
   isCoreColumn,
   newId,
   normalizeTitle,
+  searchTasks,
   toStatusKey,
   UNTITLED_LABEL,
   validateColumnLabel,
@@ -318,30 +319,47 @@ describe('columns', () => {
   })
 })
 
+const older = task({ id: 'old', title: 'Older task', created_at: '2026-07-01T10:00:00.000Z' })
+const newer = task({ id: 'new', title: 'Newer task', created_at: '2026-07-05T10:00:00.000Z' })
+const finished = task({ id: 'done', title: 'Finished', status: 'done' })
+const spread = [older, newer, finished]
+
 describe('visibleTasks', () => {
-  const older = task({ id: 'old', title: 'Older task', created_at: '2026-07-01T10:00:00.000Z' })
-  const newer = task({ id: 'new', title: 'Newer task', created_at: '2026-07-05T10:00:00.000Z' })
-  const done = task({ id: 'done', title: 'Finished', status: 'done' })
-  const all = [older, newer, done]
-
   it('returns only the column, newest first', () => {
-    expect(visibleTasks(all, 'todo').map((t) => t.id)).toEqual(['new', 'old'])
-  })
-
-  it('matches title and description case-insensitively', () => {
-    expect(visibleTasks(all, 'todo', 'NEWER').map((t) => t.id)).toEqual(['new'])
-    expect(
-      visibleTasks([task({ description: 'about caching' })], 'todo', 'CACHING').map((t) => t.id),
-    ).toEqual(['id-1'])
-  })
-
-  it('returns nothing when the query matches no task', () => {
-    expect(visibleTasks(all, 'todo', 'zzz')).toEqual([])
+    expect(visibleTasks(spread, 'todo').map((t) => t.id)).toEqual(['new', 'old'])
   })
 
   it('does not mutate the input array', () => {
-    const input = [...all]
+    const input = [...spread]
     visibleTasks(input, 'todo')
-    expect(input).toEqual(all)
+    expect(input).toEqual(spread)
+  })
+})
+
+describe('searchTasks', () => {
+  it('searches across every column, newest first', () => {
+    expect(searchTasks(spread, 'task').map((t) => t.id)).toEqual(['new', 'old'])
+    expect(searchTasks(spread, 'finished').map((t) => t.id)).toEqual(['done'])
+  })
+
+  it('matches title and description case-insensitively', () => {
+    expect(searchTasks(spread, 'NEWER').map((t) => t.id)).toEqual(['new'])
+    expect(searchTasks([task({ description: 'about caching' })], 'CACHING').map((t) => t.id)).toEqual([
+      'id-1',
+    ])
+  })
+
+  it('returns nothing when the query matches no task', () => {
+    expect(searchTasks(spread, 'zzz')).toEqual([])
+  })
+
+  it.each(['', '   '])('returns nothing for the blank query %j', (query) => {
+    expect(searchTasks(spread, query)).toEqual([])
+  })
+
+  it('does not mutate the input array', () => {
+    const input = [...spread]
+    searchTasks(input, 'task')
+    expect(input).toEqual(spread)
   })
 })

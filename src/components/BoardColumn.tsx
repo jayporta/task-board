@@ -38,11 +38,18 @@ export function BoardColumn({ column }: { column: Column }) {
         transition: 'background-color 120ms, border-color 120ms',
       }}
     >
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', px: 0.5, pb: 1.5 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.3 }}>
-          {column.label}
-        </Typography>
-        <Chip size="small" label={tasks.length} />
+      <Stack
+        direction="row"
+        sx={{ alignItems: 'center', justifyContent: 'space-between', px: 0.5, pb: 1.5 }}
+      >
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.3 }}>
+            {column.label}
+          </Typography>
+          <Chip size="small" label={tasks.length} />
+        </Stack>
+
+        {addButton}
       </Stack>
 
       {tasks.length === 0 ? (
@@ -51,17 +58,13 @@ export function BoardColumn({ column }: { column: Column }) {
           description={
             canAdd ? 'Add a task, or drag one here.' : 'Drag a task here to change its status.'
           }
-          action={addButton}
         />
       ) : (
-        <>
-          <Stack spacing={1.5}>
-            {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
-            ))}
-          </Stack>
-          {addButton && <Stack sx={{ alignItems: 'flex-start', pt: 1.5 }}>{addButton}</Stack>}
-        </>
+        <Stack spacing={1.5}>
+          {tasks.map((task) => (
+            <TaskCard key={task.id} task={task} />
+          ))}
+        </Stack>
       )}
     </Paper>
   )
