@@ -1,16 +1,25 @@
 import { useState } from 'react'
 import ClearIcon from '@mui/icons-material/Clear'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
+import LightModeIcon from '@mui/icons-material/LightMode'
 import SearchIcon from '@mui/icons-material/Search'
 import AppBar from '@mui/material/AppBar'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
 import Toolbar from '@mui/material/Toolbar'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useBoardContext } from '../context/boardContext'
+import type { ThemeMode } from '../lib/theme'
 import { SearchResults } from './SearchResults'
 
-export function BoardToolbar() {
+type BoardToolbarProps = {
+  mode: ThemeMode
+  onToggleMode: () => void
+}
+
+export function BoardToolbar({ mode, onToggleMode }: BoardToolbarProps) {
   const { query, setQuery } = useBoardContext()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
 
@@ -54,6 +63,15 @@ export function BoardToolbar() {
         />
 
         <SearchResults anchorEl={anchorEl} />
+
+        <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          <IconButton
+            aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={onToggleMode}
+          >
+            {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+        </Tooltip>
       </Toolbar>
     </AppBar>
   )

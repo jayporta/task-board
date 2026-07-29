@@ -1,4 +1,4 @@
-import { createTheme, ThemeProvider } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import CssBaseline from '@mui/material/CssBaseline'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -9,11 +9,7 @@ import { BoardToolbar } from './components/BoardToolbar'
 import { TaskDialog } from './components/TaskDialog'
 import { BoardProvider } from './context/BoardProvider'
 import { useBoardContext } from './context/boardContext'
-
-const theme = createTheme({
-  palette: { mode: 'light' },
-  shape: { borderRadius: 8 },
-})
+import { useThemeMode } from './hooks/useThemeMode'
 
 function Board() {
   const { board } = useBoardContext()
@@ -37,6 +33,8 @@ function Board() {
 }
 
 function App() {
+  const { mode, toggleMode, theme } = useThemeMode()
+
   return (
     <ThemeProvider theme={theme}>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -50,7 +48,7 @@ function App() {
               bgcolor: 'background.default',
             }}
           >
-            <BoardToolbar />
+            <BoardToolbar mode={mode} onToggleMode={toggleMode} />
             <Board />
           </Box>
           <TaskDialog />
