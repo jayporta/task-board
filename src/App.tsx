@@ -1,9 +1,9 @@
 import { createTheme, ThemeProvider } from '@mui/material/styles'
 import Box from '@mui/material/Box'
-import Container from '@mui/material/Container'
 import CssBaseline from '@mui/material/CssBaseline'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AddColumnButton } from './components/AddColumnButton'
 import { BoardColumn } from './components/BoardColumn'
 import { BoardToolbar } from './components/BoardToolbar'
 import { TaskDialog } from './components/TaskDialog'
@@ -19,21 +19,20 @@ function Board() {
   const { board } = useBoardContext()
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 2,
-          alignItems: 'start',
-          // min() lets a track shrink below 280px on very narrow screens.
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
-        }}
-      >
+    // The scroller fills the space under the header, so its horizontal bar sits
+    // at the bottom of the window rather than under the tallest column.
+    // px matches the Toolbar gutters, lining the columns up with the heading.
+    <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', px: { xs: 2, sm: 3 }, py: 3 }}>
+      {/* One horizontal row rather than a wrapping grid, so the add button
+          always sits directly beside the last column. */}
+      <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 2, alignItems: 'flex-start' }}>
         {board.columns.map((column) => (
           <BoardColumn key={column.id} column={column} />
         ))}
+
+        <AddColumnButton />
       </Box>
-    </Container>
+    </Box>
   )
 }
 
@@ -43,7 +42,14 @@ function App() {
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <CssBaseline />
         <BoardProvider>
-          <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default' }}>
+          <Box
+            sx={{
+              height: '100dvh',
+              display: 'flex',
+              flexDirection: 'column',
+              bgcolor: 'background.default',
+            }}
+          >
             <BoardToolbar />
             <Board />
           </Box>

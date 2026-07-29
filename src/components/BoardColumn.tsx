@@ -1,19 +1,25 @@
+import { useState } from 'react'
 import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
+import IconButton from '@mui/material/IconButton'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useBoardContext } from '../context/boardContext'
 import { useTaskDropTarget } from '../hooks/useTaskDropTarget'
-import { CREATE_STATUS, visibleTasks } from '../lib/board'
+import { CREATE_STATUS, isCoreColumn, visibleTasks } from '../lib/board'
+import { ConfirmDialog } from './ConfirmDialog'
 import { EmptyState } from './EmptyState'
 import { TaskCard } from './TaskCard'
 import type { Column } from '../types'
 
 export function BoardColumn({ column }: { column: Column }) {
-  const { board, createTask } = useBoardContext()
+  const { board, createTask, dispatch } = useBoardContext()
   const { isOver, dropProps } = useTaskDropTarget(column.status)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const tasks = visibleTasks(board.tasks, column.status)
 
   // New tasks always start in one column, so only that one gets an add control.
@@ -29,6 +35,10 @@ export function BoardColumn({ column }: { column: Column }) {
       variant="outlined"
       {...dropProps}
       sx={{
+        // Grows to share the row but never past 400px, and never shrinks below
+        // 280px — the row scrolls horizontally instead.
+        flex: '1 0 280px',
+        maxWidth: 400,
         display: 'flex',
         flexDirection: 'column',
         bgcolor: isOver ? 'action.selected' : 'action.hover',
@@ -50,6 +60,20 @@ export function BoardColumn({ column }: { column: Column }) {
         </Stack>
 
         {addButton}
+
+        {/* Only user-added columns can go; the three core statuses are fixed. */}
+        {!isCoreColumn(column) && (
+          <Tooltip title="Delete column">
+            <IconButton
+              size="small"
+              aria-label={`Delete ${column.label} column`}
+              onClick={() => setConfirmingDelete(true)}
+              sx={{ '&:hover': { color: 'error.main' } }}
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
       </Stack>
 
       {tasks.length === 0 ? (
@@ -66,6 +90,20 @@ export function BoardColumn({ column }: { column: Column }) {
           ))}
         </Stack>
       )}
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Delete this column?"
+        description={
+          tasks.length === 0
+            ? `"${column.label}" will be removed from the board.`
+            : `"${column.label}" will be removed, and its ${tasks.length} ${
+                tasks.length === 1 ? 'task moves' : 'tasks move'
+              } back to Todo.`
+        }
+        onConfirm={() => dispatch({ type: 'delete_column', id: column.id })}
+        onClose={() => setConfirmingDelete(false)}
+      />
     </Paper>
   )
 }
