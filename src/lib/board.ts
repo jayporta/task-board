@@ -135,6 +135,70 @@ export function visibleTasks(tasks: Task[], status: Status): Task[] {
   return tasks.filter((task) => task.status === status).sort(newestFirst)
 }
 
+/** The label of the column a task belongs to, falling back to the raw key. */
+export function columnLabel(columns: Column[], status: Status): string {
+  return columns.find((column) => column.status === status)?.label ?? status
+}
+
+export const SORT_KEYS = ['title', 'status', 'due_at'] as const
+export type SortKey = (typeof SORT_KEYS)[number]
+export type SortDirection = 'asc' | 'desc'
+
+/** An empty list means no filter, so "all" and "nothing picked" are one state. */
+export function filterTasksByStatus(tasks: Task[], statuses: Status[]): Task[] {
+  if (statuses.length === 0) return tasks
+  return tasks.filter((task) => statuses.includes(task.status))
+}
+
+const compareTitles = (a: Task, b: Task) =>
+  displayTitle(a).localeCompare(displayTitle(b), undefined, { sensitivity: 'base' })
+
+/** Column order, so ascending reads left to right like the board does. */
+const compareStatuses = (columns: Column[]) => {
+  const rank = (task: Task) => {
+    const index = columns.findIndex((column) => column.status === task.status)
+    return index === -1 ? columns.length : index
+  }
+  return (a: Task, b: Task) => rank(a) - rank(b)
+}
+
+/**
+ * Undated tasks sort last whichever way the direction points — a missing due
+ * date is absent, not later than every date, so flipping to descending should
+ * not float them to the top.
+ */
+const compareDueDates = (a: Task, b: Task) => {
+  if (!a.due_at || !b.due_at) return Number(!a.due_at) - Number(!b.due_at)
+  return a.due_at.localeCompare(b.due_at)
+}
+
+/** A sorted copy — `newestFirst` breaks ties so the order is never arbitrary. */
+export function sortTasks(
+  tasks: Task[],
+  columns: Column[],
+  key: SortKey,
+  direction: SortDirection,
+): Task[] {
+  const comparators: Record<SortKey, (a: Task, b: Task) => number> = {
+    title: compareTitles,
+    status: compareStatuses(columns),
+    due_at: compareDueDates,
+  }
+
+  const compare = comparators[key]
+  const undated = (task: Task) => (key === 'due_at' && !task.due_at ? 1 : 0)
+  const sign = direction === 'desc' ? -1 : 1
+
+  return [...tasks].sort((a, b) => {
+    // Kept out of the direction flip, so they stay pinned to the bottom.
+    const stranded = undated(a) - undated(b)
+    if (stranded !== 0) return stranded
+
+    const primary = compare(a, b)
+    return primary === 0 ? newestFirst(a, b) : primary * sign
+  })
+}
+
 /**
  * Tasks matching a search, across every column. Empty for a blank query, so an
  * untouched search box shows no results rather than the whole board.
@@ -165,6 +229,8 @@ export type BoardAction =
   | { type: 'set_due_date'; id: string; due_at?: string }
   | { type: 'move_task'; id: string; status: Status }
   | { type: 'delete_task'; id: string }
+  /** Bulk clear-out from the all-tasks list, in one pass rather than one each. */
+  | { type: 'delete_tasks'; ids: string[] }
   | { type: 'add_column'; label: string }
   | { type: 'delete_column'; id: string }
 
@@ -227,6 +293,11 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
 
     case 'delete_task':
       return { ...state, tasks: state.tasks.filter((task) => task.id !== action.id) }
+
+    case 'delete_tasks': {
+      const doomed = new Set(action.ids)
+      return { ...state, tasks: state.tasks.filter((task) => !doomed.has(task.id)) }
+    }
 
     case 'add_column': {
       if (validateColumnLabel(action.label, state.columns)) return state

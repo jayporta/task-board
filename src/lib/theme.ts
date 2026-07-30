@@ -19,6 +19,18 @@ export const theme = createTheme({
         asterisk: ({ theme }) => ({ color: theme.palette.error.main }),
       },
     },
+    // Titles carry a close button on the right, so the row is a flex pair. A
+    // title on its own is unaffected — one item still sits where it always did.
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: theme.spacing(2),
+        }),
+      },
+    },
     // Every dialog in the app wants the same roomier action row.
     MuiDialogActions: {
       styleOverrides: {
