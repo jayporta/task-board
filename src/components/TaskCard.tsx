@@ -11,7 +11,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useBoardContext } from '../context/boardContext'
 import { useTaskDrag } from '../hooks/useTaskDrag'
-import { displayTitle, normalizeTitle, UNTITLED_LABEL } from '../lib/board'
+import { deleteTaskPrompt, displayTitle, normalizeTitle, UNTITLED_LABEL } from '../lib/board'
 import { formatDate } from '../lib/dates'
 import type { Task } from '../types'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -165,8 +165,7 @@ export function TaskCard({ task }: { task: Task }) {
 
         <ConfirmDialog
           open={confirmingDelete}
-          title="Delete this task?"
-          description={`"${displayTitle(task)}" will be removed from the board. This cannot be undone.`}
+          {...deleteTaskPrompt(task)}
           onConfirm={() => dispatch({ type: 'delete_task', id: task.id })}
           onClose={() => setConfirmingDelete(false)}
         />

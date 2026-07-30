@@ -11,6 +11,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useBoardContext } from '../context/boardContext';
 import { UNTITLED_LABEL } from '../lib/board';
 import type { Task } from '../types';
+import { DialogCloseButton } from './DialogCloseButton';
 
 /**
  * The task details form. Mounted only while its dialog is open, so its fields
@@ -39,6 +40,8 @@ export function TaskForm({ task }: { task: Task }) {
   return (
     <Box component="form" onSubmit={handleSubmit}>
       <DialogTitle>Task details</DialogTitle>
+      {/* Discards the draft, like Cancel. */}
+      <DialogCloseButton label="Close task details" onClose={closeDetails} />
 
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>

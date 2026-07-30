@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AddColumnButton } from './components/AddColumnButton'
+import { AllTasksDialog } from './components/AllTasksDialog'
 import { BoardColumn } from './components/BoardColumn'
 import { BoardToolbar } from './components/BoardToolbar'
 import { TaskDialog } from './components/TaskDialog'
@@ -46,6 +47,7 @@ function App() {
             <Board />
           </Box>
           <TaskDialog />
+          <AllTasksDialog />
         </BoardProvider>
       </LocalizationProvider>
     </ThemeProvider>

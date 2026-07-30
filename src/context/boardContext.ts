@@ -17,6 +17,10 @@ export type BoardContextValue = {
   /** Search text narrowing every column at once. */
   query: string
   setQuery: (query: string) => void
+  /** Whether the flat list of every task is open. Its own filters live inside it. */
+  allTasksOpen: boolean
+  openAllTasks: () => void
+  closeAllTasks: () => void
 }
 
 export const BoardContext = createContext<BoardContextValue | null>(null)

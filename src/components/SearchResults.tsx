@@ -6,17 +6,13 @@ import Paper from '@mui/material/Paper'
 import Popper from '@mui/material/Popper'
 import Typography from '@mui/material/Typography'
 import { useBoardContext } from '../context/boardContext'
-import { displayTitle, searchTasks } from '../lib/board'
-import type { Status } from '../types'
+import { columnLabel, displayTitle, searchTasks } from '../lib/board'
 
 /** Results for the toolbar search, listed beneath the field it is anchored to. */
 export function SearchResults({ anchorEl }: { anchorEl: HTMLElement | null }) {
   const { board, query, setQuery, openDetails } = useBoardContext()
   const results = searchTasks(board.tasks, query)
   const open = query.trim().length > 0 && anchorEl !== null
-
-  const columnLabel = (status: Status) =>
-    board.columns.find((column) => column.status === status)?.label ?? status
 
   return (
     <Popper
@@ -47,7 +43,7 @@ export function SearchResults({ anchorEl }: { anchorEl: HTMLElement | null }) {
               >
                 <ListItemText
                   primary={displayTitle(task)}
-                  secondary={columnLabel(task.status)}
+                  secondary={columnLabel(board.columns, task.status)}
                   slotProps={{
                     primary: { noWrap: true, sx: { fontWeight: 600 } },
                     secondary: { variant: 'caption' },

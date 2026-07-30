@@ -9,6 +9,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null)
   const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [allTasksOpen, setAllTasksOpen] = useState(false)
 
   const createTask = useCallback(
     (status: Status) => {
@@ -23,6 +24,8 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   const clearFocus = useCallback(() => setFocusTaskId(null), [])
   const openDetails = useCallback((task: Task) => setDetailsTaskId(task.id), [])
   const closeDetails = useCallback(() => setDetailsTaskId(null), [])
+  const openAllTasks = useCallback(() => setAllTasksOpen(true), [])
+  const closeAllTasks = useCallback(() => setAllTasksOpen(false), [])
 
   // Looked up rather than stored, so the dialog never shows a stale task.
   const detailsTask = board.tasks.find((task) => task.id === detailsTaskId) ?? null
@@ -39,6 +42,9 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       closeDetails,
       query,
       setQuery,
+      allTasksOpen,
+      openAllTasks,
+      closeAllTasks,
     }),
     [
       board,
@@ -50,6 +56,9 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       openDetails,
       closeDetails,
       query,
+      allTasksOpen,
+      openAllTasks,
+      closeAllTasks,
     ],
   )
 
