@@ -5,3 +5,11 @@
  * simply never dropping.
  */
 export const DRAG_MIME = 'application/x-task-board-task'
+
+/**
+ * The payload type for a column being reordered. Distinct from `DRAG_MIME` so a
+ * column and a card can share a drop area: each side ignores the other's type,
+ * and a card dragged over a column still lands in the column's task drop target
+ * rather than reordering the board.
+ */
+export const COLUMN_DRAG_MIME = 'application/x-task-board-column'

@@ -128,6 +128,27 @@ export function createColumn(label: string): Column {
   }
 }
 
+/**
+ * Reorders columns by dropping one onto another: the dragged column takes the
+ * target's place and the rest close up around it.
+ *
+ * Column order is presentation only. Tasks join their column on `status`, never
+ * on position, so nothing outside the board's layout reads this order.
+ *
+ * Returns the original array for a move that changes nothing, which is what
+ * lets the reducer hand back the same state and skip the re-render.
+ */
+export function moveColumn(columns: Column[], id: string, targetId: string): Column[] {
+  const from = columns.findIndex((column) => column.id === id)
+  const to = columns.findIndex((column) => column.id === targetId)
+  if (from === -1 || to === -1 || from === to) return columns
+
+  const next = [...columns]
+  const [moved] = next.splice(from, 1)
+  next.splice(to, 0, moved)
+  return next
+}
+
 const newestFirst = (a: Task, b: Task) => b.created_at.localeCompare(a.created_at)
 
 /** Tasks in one column, newest first. */
@@ -167,6 +188,8 @@ export type BoardAction =
   | { type: 'delete_task'; id: string }
   | { type: 'add_column'; label: string }
   | { type: 'delete_column'; id: string }
+  /** Reorder: `id` takes `targetId`'s place. Layout only — no task is touched. */
+  | { type: 'move_column'; id: string; targetId: string }
 
 const hasStatus = (state: BoardState, status: Status) =>
   state.columns.some((column) => column.status === status)
@@ -242,6 +265,15 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
           task.status === target.status ? { ...task, status: FALLBACK_STATUS } : task,
         ),
       }
+    }
+
+    /**
+     * Every column moves, core ones included: deletion is restricted because it
+     * would strand tasks, but position carries no meaning to strand.
+     */
+    case 'move_column': {
+      const columns = moveColumn(state.columns, action.id, action.targetId)
+      return columns === state.columns ? state : { ...state, columns }
     }
   }
 }

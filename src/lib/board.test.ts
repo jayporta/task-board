@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { BoardState, Task } from '../types'
-import { boardReducer, createEmptyBoard, displayTitle, searchTasks, UNTITLED_LABEL } from './board'
+import {
+  boardReducer,
+  createEmptyBoard,
+  displayTitle,
+  searchTasks,
+  UNTITLED_LABEL,
+  visibleTasks,
+} from './board'
 
 function boardWith(tasks: Task[]): BoardState {
   return { ...createEmptyBoard(), tasks }
@@ -56,6 +63,36 @@ describe('boardReducer', () => {
     expect(next.tasks[0].status).toBe('todo')
 
     expect(boardReducer(next, { type: 'delete_column', id: next.columns[0].id })).toBe(next)
+  })
+
+  it('reorders any column, core ones included, and ignores a move that lands nowhere', () => {
+    const state = createEmptyBoard()
+    const [todo, inProgress, done] = state.columns
+
+    // Dragged onto Done, Todo takes its place and the others close up.
+    const next = boardReducer(state, { type: 'move_column', id: todo.id, targetId: done.id })
+    expect(next.columns.map((column) => column.status)).toEqual(['in_progress', 'done', 'todo'])
+
+    // Same object back, so a drop on itself or on nothing costs no re-render.
+    expect(boardReducer(next, { type: 'move_column', id: todo.id, targetId: todo.id })).toBe(next)
+    expect(boardReducer(next, { type: 'move_column', id: todo.id, targetId: 'ghost' })).toBe(next)
+    expect(boardReducer(next, { type: 'move_column', id: 'ghost', targetId: inProgress.id })).toBe(
+      next,
+    )
+  })
+
+  it('leaves every task untouched when columns move, so search and lists are unaffected', () => {
+    // Order is layout. Anything reading tasks joins on `status`, which a move
+    // never rewrites — a reordered board answers exactly as it did before.
+    const tasks = [task({ id: 'a' }), task({ id: 'b', title: 'Ship it', status: 'done' })]
+    const state = boardWith(tasks)
+    const [todo, , done] = state.columns
+
+    const next = boardReducer(state, { type: 'move_column', id: done.id, targetId: todo.id })
+
+    expect(next.tasks).toBe(state.tasks)
+    expect(searchTasks(next.tasks, 'ship').map((t) => t.id)).toEqual(['b'])
+    expect(visibleTasks(next.tasks, 'todo').map((t) => t.id)).toEqual(['a'])
   })
 })
 
