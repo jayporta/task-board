@@ -26,11 +26,12 @@ export function BoardColumn({ column }: { column: Column }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const tasks = visibleTasks(board.tasks, column.status)
 
+  const position = board.columns.findIndex((candidate) => candidate.id === column.id)
+
   // Keyboard reordering, since a drag reaches neither a keyboard nor a touch
   // screen. Swapping with a neighbour is the same move as dropping onto it.
   const shiftBy = (offset: number) => {
-    const index = board.columns.findIndex((candidate) => candidate.id === column.id)
-    const target = board.columns[index + offset]
+    const target = board.columns[position + offset]
     if (target) dispatch({ type: 'move_column', id: column.id, targetId: target.id })
   }
 
@@ -92,7 +93,9 @@ export function BoardColumn({ column }: { column: Column }) {
             <Tooltip title="Drag to reorder, or use the arrow keys">
               <IconButton
                 size="small"
-                aria-label={`Reorder ${column.label} column`}
+                // The position is part of the name so an arrow-key move is
+                // announced on the grip that still holds focus.
+                aria-label={`Reorder ${column.label} column, position ${position + 1} of ${board.columns.length}`}
                 {...handleProps}
                 onKeyDown={handleGripKeyDown}
                 sx={{
