@@ -122,6 +122,20 @@ describe('sortTasks', () => {
     // Alphabetically this would be done, in_progress, todo — the board reads
     // todo, in_progress, done, and that is the order the list should follow.
     expect(sortTasks(tasks, columns, 'status', 'asc').map((t) => t.id)).toEqual(['t', 'p', 'd'])
+    expect(sortTasks(tasks, columns, 'status', 'desc').map((t) => t.id)).toEqual(['d', 'p', 't'])
+  })
+
+  it('breaks ties on creation date, newest first, whichever way it is pointed', () => {
+    // Without this the order of equal keys would be whatever `sort` happened to
+    // do, and the list would reshuffle for no visible reason.
+    const tasks = [
+      task({ id: 'old', title: 'Same', created_at: '2026-07-01T10:00:00.000Z' }),
+      task({ id: 'new', title: 'Same', created_at: '2026-07-09T10:00:00.000Z' }),
+    ]
+
+    expect(sortTasks(tasks, columns, 'title', 'asc').map((t) => t.id)).toEqual(['new', 'old'])
+    // The tie-break sits outside the direction flip, so it does not reverse.
+    expect(sortTasks(tasks, columns, 'title', 'desc').map((t) => t.id)).toEqual(['new', 'old'])
   })
 
   it('keeps undated tasks last in both directions', () => {

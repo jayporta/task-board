@@ -135,6 +135,17 @@ export function visibleTasks(tasks: Task[], status: Status): Task[] {
   return tasks.filter((task) => task.status === status).sort(newestFirst)
 }
 
+/**
+ * What the confirm dialog says before a delete. One wording, whether the task
+ * is being removed from its card or from the all-tasks list.
+ */
+export function deleteTaskPrompt(task: Task): { title: string; description: string } {
+  return {
+    title: 'Delete this task?',
+    description: `"${displayTitle(task)}" will be removed from the board. This cannot be undone.`,
+  }
+}
+
 /** The label of the column a task belongs to, falling back to the raw key. */
 export function columnLabel(columns: Column[], status: Status): string {
   return columns.find((column) => column.status === status)?.label ?? status
@@ -162,15 +173,8 @@ const compareStatuses = (columns: Column[]) => {
   return (a: Task, b: Task) => rank(a) - rank(b)
 }
 
-/**
- * Undated tasks sort last whichever way the direction points — a missing due
- * date is absent, not later than every date, so flipping to descending should
- * not float them to the top.
- */
-const compareDueDates = (a: Task, b: Task) => {
-  if (!a.due_at || !b.due_at) return Number(!a.due_at) - Number(!b.due_at)
-  return a.due_at.localeCompare(b.due_at)
-}
+/** Only ever reached for two dated tasks; `sortTasks` strands the rest first. */
+const compareDueDates = (a: Task, b: Task) => (a.due_at ?? '').localeCompare(b.due_at ?? '')
 
 /** A sorted copy — `newestFirst` breaks ties so the order is never arbitrary. */
 export function sortTasks(
@@ -186,11 +190,14 @@ export function sortTasks(
   }
 
   const compare = comparators[key]
+  /**
+   * An undated task is absent from the due-date order, not later than every
+   * date, so it is pinned to the bottom outside the direction flip below.
+   */
   const undated = (task: Task) => (key === 'due_at' && !task.due_at ? 1 : 0)
   const sign = direction === 'desc' ? -1 : 1
 
   return [...tasks].sort((a, b) => {
-    // Kept out of the direction flip, so they stay pinned to the bottom.
     const stranded = undated(a) - undated(b)
     if (stranded !== 0) return stranded
 

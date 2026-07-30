@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
-import CloseIcon from '@mui/icons-material/Close'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined'
 import Button from '@mui/material/Button'
 import Checkbox from '@mui/material/Checkbox'
@@ -22,8 +21,10 @@ import Typography from '@mui/material/Typography'
 import { useBoardContext } from '../context/boardContext'
 import {
   columnLabel,
+  deleteTaskPrompt,
   displayTitle,
   filterTasksByStatus,
+  SORT_KEYS,
   sortTasks,
   type SortDirection,
   type SortKey,
@@ -31,6 +32,7 @@ import {
 import { describeDueDate, formatDate, isOverdue } from '../lib/dates'
 import type { Status, Task } from '../types'
 import { ConfirmDialog } from './ConfirmDialog'
+import { DialogCloseButton } from './DialogCloseButton'
 import { EmptyState } from './EmptyState'
 
 const SORT_LABELS: Record<SortKey, string> = {
@@ -45,29 +47,35 @@ type Pending = { ids: string[]; title: string; description: string }
 /** The contents of the all-tasks modal: every task as one flat, filterable list. */
 export function AllTasksPanel() {
   const { board, dispatch, closeAllTasks } = useBoardContext()
-  const [statuses, setStatuses] = useState<Status[]>([])
+  // Empty is "All" — the value the filter starts on, and the one the helper
+  // already reads as "no filter".
+  const [status, setStatus] = useState<Status | ''>('')
   const [sortKey, setSortKey] = useState<SortKey>('status')
   const [direction, setDirection] = useState<SortDirection>('asc')
   const [selected, setSelected] = useState<string[]>([])
   const [pending, setPending] = useState<Pending | null>(null)
 
-  const rows = sortTasks(
-    filterTasksByStatus(board.tasks, statuses),
-    board.columns,
-    sortKey,
-    direction,
+  // Ticking a checkbox or opening the confirm dialog re-renders the panel; the
+  // whole board does not need re-filtering and re-sorting for either.
+  const rows = useMemo(
+    () =>
+      sortTasks(
+        filterTasksByStatus(board.tasks, status ? [status] : []),
+        board.columns,
+        sortKey,
+        direction,
+      ),
+    [board.tasks, board.columns, status, sortKey, direction],
   )
 
-  const visibleIds = rows.map((task) => task.id)
-  const selectedHere = selected.filter((id) => visibleIds.includes(id))
-  const allSelected = rows.length > 0 && selectedHere.length === rows.length
+  const allSelected = rows.length > 0 && selected.length === rows.length
 
-  const toggleStatus = (status: Status) =>
-    setStatuses((current) =>
-      current.includes(status)
-        ? current.filter((value) => value !== status)
-        : [...current, status],
-    )
+  // Changing what is listed starts the selection over, so a task the filter has
+  // taken off screen can never stay ticked out of sight.
+  const changeFilter = (next: Status | '') => {
+    setStatus(next)
+    setSelected([])
+  }
 
   const toggleRow = (id: string) =>
     setSelected((current) =>
@@ -75,19 +83,14 @@ export function AllTasksPanel() {
     )
 
   // Select-all covers what the filter is showing, not the whole board.
-  const toggleAll = () => setSelected(allSelected ? [] : visibleIds)
+  const toggleAll = () => setSelected(allSelected ? [] : rows.map((task) => task.id))
 
-  const confirmOne = (task: Task) =>
-    setPending({
-      ids: [task.id],
-      title: 'Delete this task?',
-      description: `"${displayTitle(task)}" will be removed from the board. This cannot be undone.`,
-    })
+  const confirmOne = (task: Task) => setPending({ ids: [task.id], ...deleteTaskPrompt(task) })
 
   const confirmSelection = () => {
-    const count = `${selectedHere.length} ${selectedHere.length === 1 ? 'task' : 'tasks'}`
+    const count = `${selected.length} ${selected.length === 1 ? 'task' : 'tasks'}`
     setPending({
-      ids: selectedHere,
+      ids: selected,
       title: `Delete ${count}?`,
       description: `${count} will be removed from the board. This cannot be undone.`,
     })
@@ -95,20 +98,15 @@ export function AllTasksPanel() {
 
   const remove = (ids: string[]) => {
     dispatch({ type: 'delete_tasks', ids })
-    // Dropping the whole selection keeps deleted ids from lingering in it.
-    setSelected([])
+    // Only the deleted ids leave the selection — deleting one row must not
+    // clear a batch the user has been ticking up.
+    setSelected((current) => current.filter((id) => !ids.includes(id)))
   }
 
   return (
     <>
-      <DialogTitle>
-        All tasks
-        <Tooltip title="Close">
-          <IconButton aria-label="Close all tasks" onClick={closeAllTasks} sx={{ mr: -1 }}>
-            <CloseIcon />
-          </IconButton>
-        </Tooltip>
-      </DialogTitle>
+      <DialogTitle>All tasks</DialogTitle>
+      <DialogCloseButton label="Close all tasks" onClose={closeAllTasks} />
 
       <DialogContent sx={{ maxHeight: '70vh' }}>
         <Stack
@@ -119,29 +117,21 @@ export function AllTasksPanel() {
           // through the sort field's floating label.
           sx={{ alignItems: 'center', flexWrap: 'wrap', pt: 1, mb: 2 }}
         >
-          <Chip
-            label="All"
+          <TextField
+            select
             size="small"
-            aria-pressed={statuses.length === 0}
-            color={statuses.length === 0 ? 'primary' : 'default'}
-            variant={statuses.length === 0 ? 'filled' : 'outlined'}
-            onClick={() => setStatuses([])}
-          />
-
-          {board.columns.map((column) => {
-            const active = statuses.includes(column.status)
-            return (
-              <Chip
-                key={column.id}
-                label={column.label}
-                size="small"
-                aria-pressed={active}
-                color={active ? 'primary' : 'default'}
-                variant={active ? 'filled' : 'outlined'}
-                onClick={() => toggleStatus(column.status)}
-              />
-            )
-          })}
+            label="Filter by"
+            value={status}
+            onChange={(event) => changeFilter(event.target.value)}
+            sx={{ width: 160 }}
+          >
+            <MenuItem value="">All</MenuItem>
+            {board.columns.map((column) => (
+              <MenuItem key={column.id} value={column.status}>
+                {column.label}
+              </MenuItem>
+            ))}
+          </TextField>
 
           <TextField
             select
@@ -151,7 +141,7 @@ export function AllTasksPanel() {
             onChange={(event) => setSortKey(event.target.value as SortKey)}
             sx={{ ml: 'auto', width: 140 }}
           >
-            {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+            {SORT_KEYS.map((key) => (
               <MenuItem key={key} value={key}>
                 {SORT_LABELS[key]}
               </MenuItem>
@@ -175,7 +165,7 @@ export function AllTasksPanel() {
             {rows.length} of {board.tasks.length} {board.tasks.length === 1 ? 'task' : 'tasks'}
           </Typography>
 
-          {selectedHere.length > 0 && (
+          {selected.length > 0 && (
             <Button
               size="small"
               color="error"
@@ -183,11 +173,12 @@ export function AllTasksPanel() {
               onClick={confirmSelection}
               sx={{ ml: 'auto' }}
             >
-              Delete {selectedHere.length} selected
+              Delete {selected.length} selected
             </Button>
           )}
         </Stack>
 
+        {/* The table sticks its headings to `DialogContent`, the scroll box. */}
         {rows.length === 0 ? (
           <EmptyState
             title={board.tasks.length === 0 ? 'No tasks yet' : 'No tasks match these filters'}
@@ -198,14 +189,14 @@ export function AllTasksPanel() {
             }
           />
         ) : (
-          <Table size="small">
+          <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
                     size="small"
                     checked={allSelected}
-                    indeterminate={selectedHere.length > 0 && !allSelected}
+                    indeterminate={selected.length > 0 && !allSelected}
                     onChange={toggleAll}
                     slotProps={{ input: { 'aria-label': 'Select all listed tasks' } }}
                   />

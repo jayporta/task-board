@@ -1,19 +1,17 @@
 import { useState } from 'react';
-import CloseIcon from '@mui/icons-material/Close';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import Tooltip from '@mui/material/Tooltip';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useBoardContext } from '../context/boardContext';
 import { UNTITLED_LABEL } from '../lib/board';
 import type { Task } from '../types';
+import { DialogCloseButton } from './DialogCloseButton';
 
 /**
  * The task details form. Mounted only while its dialog is open, so its fields
@@ -41,20 +39,9 @@ export function TaskForm({ task }: { task: Task }) {
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
-      <DialogTitle>
-        Task details
-        <Tooltip title="Close">
-          {/* Discards the draft, like Cancel — `type` stays "button" so the
-              form is not submitted. */}
-          <IconButton
-            aria-label="Close task details"
-            onClick={closeDetails}
-            sx={{ mr: -1 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Tooltip>
-      </DialogTitle>
+      <DialogTitle>Task details</DialogTitle>
+      {/* Discards the draft, like Cancel. */}
+      <DialogCloseButton label="Close task details" onClose={closeDetails} />
 
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
