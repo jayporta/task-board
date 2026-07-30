@@ -52,7 +52,7 @@ export function AllTasksPanel() {
   const [status, setStatus] = useState<Status | ''>('')
   const [sortKey, setSortKey] = useState<SortKey>('status')
   const [direction, setDirection] = useState<SortDirection>('asc')
-  const [selected, setSelected] = useState<string[]>([])
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
   const [pending, setPending] = useState<Pending | null>(null)
 
   // Ticking a checkbox or opening the confirm dialog re-renders the panel; the
@@ -68,29 +68,34 @@ export function AllTasksPanel() {
     [board.tasks, board.columns, status, sortKey, direction],
   )
 
-  const allSelected = rows.length > 0 && selected.length === rows.length
+  // Asked of the rows rather than compared by count, so it stays right if the
+  // selection ever outlives the rows it was made from.
+  const allSelected = rows.length > 0 && rows.every((task) => selected.has(task.id))
 
   // Changing what is listed starts the selection over, so a task the filter has
   // taken off screen can never stay ticked out of sight.
   const changeFilter = (next: Status | '') => {
     setStatus(next)
-    setSelected([])
+    setSelected(new Set())
   }
 
   const toggleRow = (id: string) =>
-    setSelected((current) =>
-      current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
-    )
+    setSelected((current) => {
+      const next = new Set(current)
+      if (!next.delete(id)) next.add(id)
+      return next
+    })
 
   // Select-all covers what the filter is showing, not the whole board.
-  const toggleAll = () => setSelected(allSelected ? [] : rows.map((task) => task.id))
+  const toggleAll = () =>
+    setSelected(allSelected ? new Set() : new Set(rows.map((task) => task.id)))
 
   const confirmOne = (task: Task) => setPending({ ids: [task.id], ...deleteTaskPrompt(task) })
 
   const confirmSelection = () => {
-    const count = `${selected.length} ${selected.length === 1 ? 'task' : 'tasks'}`
+    const count = `${selected.size} ${selected.size === 1 ? 'task' : 'tasks'}`
     setPending({
-      ids: selected,
+      ids: [...selected],
       title: `Delete ${count}?`,
       description: `${count} will be removed from the board. This cannot be undone.`,
     })
@@ -100,7 +105,8 @@ export function AllTasksPanel() {
     dispatch({ type: 'delete_tasks', ids })
     // Only the deleted ids leave the selection — deleting one row must not
     // clear a batch the user has been ticking up.
-    setSelected((current) => current.filter((id) => !ids.includes(id)))
+    const doomed = new Set(ids)
+    setSelected((current) => new Set([...current].filter((id) => !doomed.has(id))))
   }
 
   return (
@@ -165,7 +171,7 @@ export function AllTasksPanel() {
             {rows.length} of {board.tasks.length} {board.tasks.length === 1 ? 'task' : 'tasks'}
           </Typography>
 
-          {selected.length > 0 && (
+          {selected.size > 0 && (
             <Button
               size="small"
               color="error"
@@ -173,7 +179,7 @@ export function AllTasksPanel() {
               onClick={confirmSelection}
               sx={{ ml: 'auto' }}
             >
-              Delete {selected.length} selected
+              Delete {selected.size} selected
             </Button>
           )}
         </Stack>
@@ -196,7 +202,7 @@ export function AllTasksPanel() {
                   <Checkbox
                     size="small"
                     checked={allSelected}
-                    indeterminate={selected.length > 0 && !allSelected}
+                    indeterminate={selected.size > 0 && !allSelected}
                     onChange={toggleAll}
                     slotProps={{ input: { 'aria-label': 'Select all listed tasks' } }}
                   />
@@ -213,11 +219,11 @@ export function AllTasksPanel() {
               {rows.map((task) => {
                 const overdue = isOverdue(task.due_at)
                 return (
-                  <TableRow key={task.id} hover selected={selected.includes(task.id)}>
+                  <TableRow key={task.id} hover selected={selected.has(task.id)}>
                     <TableCell padding="checkbox">
                       <Checkbox
                         size="small"
-                        checked={selected.includes(task.id)}
+                        checked={selected.has(task.id)}
                         onChange={() => toggleRow(task.id)}
                         slotProps={{ input: { 'aria-label': `Select ${displayTitle(task)}` } }}
                       />
