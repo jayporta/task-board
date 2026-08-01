@@ -3,12 +3,23 @@ import { useBoardContext } from '../context/boardContext'
 import { DRAG_MIME } from '../lib/dnd'
 import type { Status } from '../types'
 
+export type TaskDropTargetValue = {
+  /** True while one of our cards hovers the area — drives the drop highlight. */
+  isOver: boolean
+  /** Handlers for the drop area. Only payloads carrying `DRAG_MIME` are accepted. */
+  dropProps: {
+    onDragOver: (event: React.DragEvent) => void
+    onDragLeave: () => void
+    onDrop: (event: React.DragEvent) => void
+  }
+}
+
 /**
  * Accepts task cards dropped onto a column and moves them to `status`.
  *
- * Spread `dropProps` on the drop area; `isOver` drives its highlight.
+ * `dropProps` belongs on the drop area; `isOver` drives its highlight.
  */
-export function useTaskDropTarget(status: Status) {
+export function useTaskDropTarget(status: Status): TaskDropTargetValue {
   const { dispatch } = useBoardContext()
   const [isOver, setIsOver] = useState(false)
 

@@ -25,9 +25,9 @@ src/
 
 **Decisions live in `lib/`, components stay thin.** `lib/board.ts` holds the reducer and every behaviour rule — what a blank title means, which columns may be deleted, how search matches. Behaviour changes belong there, not in a component, which is also what keeps the tests fast and DOM-free.
 
-**Components read state from context, not props.** `useBoardContext()` (`src/context/boardContext.ts`) exposes `board`, `dispatch`, the search `query`, the open details task, and the focus target. `TaskCard`, `BoardColumn`, `TaskForm`, `SearchResults`, and `useTaskDropTarget` all reach for it directly. Do not thread callbacks down through components — if something needs board state, take it from context.
+**Components read state from context, not props.** `useBoardContext()` (`src/context/boardContext.ts`) exposes `board`, `dispatch`, the search `query`, the open details task, and the focus target. `Board`, `TaskCard`, `BoardColumn`, `TaskForm`, `SearchResults`, and `useTaskDropTarget` all reach for it directly. Do not thread callbacks down through components — if something needs board state, take it from context.
 
-**One component per file**, with two deliberate exceptions: `Board` lives in `src/App.tsx` because it exists solely to consume the context `App` provides, and each dialog file pairs a thin `*Dialog` wrapper with its `*Form` in a separate file (`TaskDialog`/`TaskForm`, `AddColumnDialog`/`AddColumnForm`).
+**One component per file, no exceptions.** `App` composes the providers and the layout shell; everything it renders lives in `components/`, including `Board`, which exists solely to read the columns off the context. Dialogs are split across two files rather than one — a thin `*Dialog` wrapper alongside its `*Form` (`TaskDialog`/`TaskForm`, `AddColumnDialog`/`AddColumnForm`) — so the form can mount fresh each time the dialog opens.
 
 ### Data model — `src/types.ts`
 
@@ -62,3 +62,4 @@ MUI owns the light/dark mode via `colorSchemes` and `defaultMode="system"` (`src
 ## Rules
 
 - Run unit tests after changing code to prevent regression and introducing new bugs.
+- Always write doc comments for variables and types. Every type, every member of a type, and every exported constant gets a `/** … */`, so hovering it in an editor explains what it is for. Say why the thing exists or what it is used for — not a restatement of its name. `/** ISO 8601 — survives the JSON round trip through localStorage. */` earns its place; `/** The task's id. */` does not.

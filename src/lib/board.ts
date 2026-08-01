@@ -78,6 +78,11 @@ export function toStatusKey(label: string): string {
     .replace(/^_+|_+$/g, '')
 }
 
+/**
+ * Why a column label was rejected. `'blank'` covers both an empty label and one
+ * that slugs to nothing ("!!!"); `'duplicate'` covers a clash on either the
+ * label or the status key it slugs to.
+ */
 export type ColumnLabelError = 'blank' | 'duplicate'
 
 /**
@@ -148,6 +153,7 @@ export function searchTasks(tasks: Task[], query: string): Task[] {
     .sort(newestFirst)
 }
 
+/** Every way the board can change. The reducer is the only thing that applies these. */
 export type BoardAction =
   /** `id` may be supplied so the caller can focus the card it just created. */
   | {
@@ -158,14 +164,18 @@ export type BoardAction =
       status: Status
       due_at?: string
     }
+  /** Writes every field, backing the details dialog — omitted fields are cleared. */
   | { type: 'edit_task'; id: string; title: string; description?: string; due_at?: string }
   /** Title-only update, so inline renaming cannot clear the other fields. */
   | { type: 'rename_task'; id: string; title: string }
   /** Due-date-only update, set from the card without opening the details dialog. */
   | { type: 'set_due_date'; id: string; due_at?: string }
+  /** Sends a task to another column. Ignored when no column holds `status`. */
   | { type: 'move_task'; id: string; status: Status }
   | { type: 'delete_task'; id: string }
+  /** Ignored when `validateColumnLabel()` rejects the label. */
   | { type: 'add_column'; label: string }
+  /** Rehomes the column's tasks to `FALLBACK_STATUS`. Ignored for core columns. */
   | { type: 'delete_column'; id: string }
 
 const hasStatus = (state: BoardState, status: Status) =>

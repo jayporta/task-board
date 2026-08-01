@@ -6,11 +6,17 @@ import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 
 type ConfirmDialogProps = {
+  /** Whether the dialog is showing; the caller owns this state. */
   open: boolean
+  /** Headline naming what is about to happen. */
   title: string
+  /** Spells out the consequence — what is deleted, and what happens to it. */
   description: string
+  /** Text on the confirm button. Defaults to "Delete". */
   confirmLabel?: string
+  /** Runs the destructive action. The dialog closes itself afterwards. */
   onConfirm: () => void
+  /** Dismisses the dialog, on cancel and after confirming. */
   onClose: () => void
 }
 

@@ -2,7 +2,9 @@ import Dialog from '@mui/material/Dialog'
 import { AddColumnForm } from './AddColumnForm'
 
 type AddColumnDialogProps = {
+  /** Whether the dialog is showing. Also gates whether the form is mounted. */
   open: boolean
+  /** Dismisses the dialog, on cancel and once a column has been added. */
   onClose: () => void
 }
 

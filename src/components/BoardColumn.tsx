@@ -12,7 +12,7 @@ import { useBoardContext } from '../context/boardContext'
 import { useTaskDropTarget } from '../hooks/useTaskDropTarget'
 import { CREATE_STATUS, FALLBACK_STATUS, isCoreColumn, visibleTasks } from '../lib/board'
 import { ConfirmDialog } from './ConfirmDialog'
-import { EmptyState } from './EmptyState'
+import { BoardColumnEmptyState } from './BoardColumnEmptyState'
 import { TaskCard } from './TaskCard'
 import type { Column } from '../types'
 
@@ -80,7 +80,7 @@ export function BoardColumn({ column }: { column: Column }) {
       </Stack>
 
       {tasks.length === 0 ? (
-        <EmptyState
+        <BoardColumnEmptyState
           title={isOver ? 'Drop to move here' : 'Nothing here'}
           description={
             canAdd ? 'Add a task, or drag one here.' : 'Drag a task here to change its status.'
