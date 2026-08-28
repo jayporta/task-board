@@ -1,5 +1,7 @@
 # Task Board
 
+This was a coding assessment that I was given to permission to upload publicly to GitHub. The requirements were to use Claude Code, use Material UI, localStorage, don't use any third-party state management tools, and don't write too many tests.
+
 A small task management board built with Vite, React 19, TypeScript and MUI. Tasks live in three columns — Todo, In Progress and Done — and persist to `localStorage`, so a refresh keeps your board.
 
 ## Running it
